@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小白&鸡毛 恋爱加减分器 💕 双向奔赴全功能版</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            background-color: #fef6f9;
+            color: #333;
+            padding: 20px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .container {
+            background: #fff;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 0 20px rgba(255, 148, 166, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #ff6b8b;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        /* 分数展示区-带头像 */
+        .score-card {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            gap: 15px;
+        }
+        .person {
+            text-align: center;
+            flex: 1;
+            background: #fdf2f5;
+            padding: 20px 15px;
+            border-radius: 15px;
+            position: relative;
+        }
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            object-fit: cover;
+            border: 3px solid #ff9eb1;
+        }
+        .person h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .score {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ff6b8b;
+            transition: color 0.3s;
+        }
+        .score.low {
+            color: #ffb84d;
+        }
+        .score.very-low {
+            color: #ff7f7f;
+        }
+        /* 纪念日角标 */
+        .anniversary-tag {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff6b8b;
+            color: #fff;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            display: none;
+        }
+        .anniversary-tag.show {
+            display: block;
+        }
+        /* 操作区-自定义加减分+标签+悄悄话 */
+        .operate {
+            margin-bottom: 30px;
+        }
+        .operate h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #555;
+            border-left: 4px solid #ff6b8b;
+            padding-left: 10px;
+        }
+        .form-item {
+            margin-bottom: 15px;
+        }
+        .form-item label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .select-person, .score-select, .tag-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
+            color: #333;
+            background: #fff;
+        }
+        .score-btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .score-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fff;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .score-btn.active {
+            background: #ff6b8b;
+            color: #fff;
+            border: none;
+        }
+        .reason, .whisper {
+            width: 100%;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 16px;
+            resize: none;
+            color: #333;
+            transition: border 0.3s;
+        }
+        .reason {
+            height: 80px;
+        }
+        .whisper {
+            height: 60px;
+        }
+        .reason:focus, .whisper:focus {
+            outline: none;
+            border: 1px solid #ff9eb1;
+        }
+        .tip {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+        .btn-wrap {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .confirm-btn, .export-btn, .anniversary-btn {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .confirm-btn {
+            flex: 2;
+            background: #ffc2d1;
+            color: #fff;
+            cursor: not-allowed;
+        }
+        .confirm-btn.able {
+            background: #ff6b8b;
+            cursor: pointer;
+        }
+        .export-btn, .anniversary-btn {
+            flex: 1;
+            background: #fdf2f5;
+            color: #ff6b8b;
+        }
+        .export-btn:hover, .anniversary-btn:hover {
+            background: #ff6b8b;
+            color: #fff;
+        }
+        /* 分数统计+趋势图区 */
+        .stat {
+            margin-bottom: 30px;
+        }
+        .stat h3, .trend h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #555;
+            border-left: 4px solid #ff6b8b;
+            padding-left: 10px;
+        }
+        .stat-card {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            background: #fdf2f5;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        .stat-item p {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .stat-num {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b8b;
+        }
+        .trend {
+            margin-bottom: 30px;
+        }
+        .chart-wrap {
+            width: 100%;
+            height: 250px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 10px;
+            background: #fff;
+        }
+        /* 记录区-多筛选+悄悄话+纪念日标记 */
+        .record {
+            margin-bottom: 20px;
+        }
+        .record h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #555;
+            border-left: 4px solid #ff6b8b;
+            padding-left: 10px;
+        }
+        .record-top-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .filter, .tag-filter {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-btn, .tag-filter-btn {
+            padding: 6px 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fff;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .filter-btn.active, .tag-filter-btn.active {
+            background: #ff6b8b;
+            color: #fff;
+            border: none;
+        }
+        .record-count {
+            font-size: 14px;
+            color: #999;
+            line-height: 30px;
+        }
+        .clear-btn {
+            padding: 6px 12px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background: #fff;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .clear-btn:hover {
+            border-color: #ff6b8b;
+            color: #ff6b8b;
+        }
+        .record-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 10px;
+        }
+        .record-item {
+            padding: 15px;
+            border-bottom: 1px solid #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            position: relative;
+        }
+        .record-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        /* 纪念日记录角标 */
+        .record-anni-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 16px;
+            height: 16px;
+            background: url("data:image/svg+xml,%3Csvg t='1737320000000' class='icon' viewBox='0 0 1024 1024' version='1.1' xmlns='http://www.w3.org/2000/svg' p-id='2874' xmlns:xlink='http://www.w3.org/1999/xlink' width='16' height='16'%3E%3Cpath d='M512 896c-212.096 0-384-171.904-384-384s171.904-384 384-384 384 171.904 384 384-171.904 384-384 384z m0-704c-176.448 0-320 143.552-320 320s143.552 320 320 320 320-143.552 320-320-143.552-320-320-320z' fill='%23ff6b8b' p-id='2875'%3E%3C/path%3E%3Cpath d='M512 416c-52.896 0-96 43.104-96 96s43.104 96 96 96 96-43.104 96-96-43.104-96-96-96z m0 128c-17.632 0-32-14.368-32-32s14.368-32 32-32 32 14.368 32 32-14.368 32-32 32z' fill='%23ff6b8b' p-id='2876'%3E%3C/path%3E%3C/svg%3E") no-repeat center;
+            display: none;
+        }
+        .record-anni-tag.show {
+            display: block;
+        }
+        .record-top {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .record-name {
+            font-weight: bold;
+            color: #ff6b8b;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .record-score {
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .record-score.add1 {
+            color: #ff6b8b;
+        }
+        .record-score.add2 {
+            color: #ff477e;
+        }
+        .record-score.minus1 {
+            color: #999;
+        }
+        .record-score.minus2 {
+            color: #666;
+        }
+        .record-tag {
+            font-size: 12px;
+            background: #fdf2f5;
+            color: #ff6b8b;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+        .record-time {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+        }
+        .record-reason {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        .record-whisper {
+            font-size: 14px;
+            background: #fef6f9;
+            padding: 8px;
+            border-radius: 6px;
+            color: #ff6b8b;
+            cursor: pointer;
+            position: relative;
+        }
+        .record-whisper::after {
+            content: '点击解锁悄悄话';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fef6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #999;
+        }
+        .record-whisper.unlock::after {
+            display: none;
+        }
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+        /* 弹窗样式-纪念日/提示/同步 */
+        .modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            display: none;
+        }
+        .modal {
+            background: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+        }
+        .modal h4 {
+            color: #ff6b8b;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-form-item {
+            margin-bottom: 15px;
+        }
+        .modal-form-item label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+        .modal-btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .modal-confirm {
+            background: #ff6b8b;
+            color: #fff;
+        }
+        .modal-cancel {
+            background: #eee;
+            color: #666;
+        }
+        .sync-tip {
+            font-size: 12px;
+            color: #999;
+            text-align: center;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            border-radius: 3px;
+            background: #ffc2d1;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+        /* 响应式适配 */
+        @media (max-width: 480px) {
+            .score-card {
+                gap: 10px;
+            }
+            .avatar {
+                width: 50px;
+                height: 50px;
+            }
+            .score {
+                font-size: 30px;
+            }
+            .btn-wrap {
+                flex-direction: column;
+            }
+            .record-top-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .filter, .tag-filter {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>小白&鸡毛 恋爱加减分器 💕 双向奔赴</h1>
+
+        <!-- 分数展示区-带头像+纪念日角标 -->
+        <div class="score-card">
+            <div class="person" id="girl">
+                <div class="anniversary-tag" id="girl-anni-tag">纪念日</div>
+                <img src="https://img.icons8.com/fluency/96/000000/girl.png" alt="小白" class="avatar" id="girl-avatar">
+                <h2>小白</h2>
+                <div class="score" id="girl-score">100</div>
+            </div>
+            <div class="person" id="boy">
+                <div class="anniversary-tag" id="boy-anni-tag">纪念日</div>
+                <img src="https://img.icons8.com/fluency/96/000000/boy.png" alt="鸡毛" class="avatar" id="boy-avatar">
+                <h2>鸡毛</h2>
+                <div class="score" id="boy-score">100</div>
+            </div>
+        </div>
+
+        <!-- 加减分操作区-全功能 -->
+        <div class="operate">
+            <h3>今日恋爱操作</h3>
+            <div class="form-item">
+                <label>选择操作对象</label>
+                <select class="select-person" id="select-person">
+                    <option value="">请选择要操作的人</option>
+                    <option value="boy">鸡毛</option>
+                    <option value="girl">小白</option>
+                </select>
+            </div>
+            <div class="form-item">
+                <label>选择分数变化</label>
+                <div class="score-btn-group" id="score-btn-group">
+                    <button class="score-btn" data-score="+1">+1 分</button>
+                    <button class="score-btn" data-score="+2">+2 分</button>
+                    <button class="score-btn" data-score="-1">-1 分</button>
+                    <button class="score-btn" data-score="-2">-2 分</button>
+                </div>
+                <input type="hidden" id="current-score" value="">
+            </div>
+            <div class="form-item">
+                <label>选择甜蜜标签（可选，可自定义）</label>
+                <select class="tag-select" id="tag-select">
+                    <option value="暖心">暖心</option>
+                    <option value="投喂">投喂</option>
+                    <option value="撒娇">撒娇</option>
+                    <option value="惹生气">惹生气</option>
+                    <option value="敷衍">敷衍</option>
+                    <option value="忘记">忘记</option>
+                    <option value="自定义">自定义标签</option>
+                </select>
+                <input type="text" class="tag-input" id="tag-input" placeholder="请输入自定义标签" style="display: none; width:100%; margin-top:8px; padding:10px; border:1px solid #eee; border-radius:8px; font-size:14px;">
+            </div>
+            <div class="form-item">
+                <label>加减分原因（必填）</label>
+                <textarea class="reason" id="reason" placeholder="说说为什么加/扣分吧～"></textarea>
+            </div>
+            <div class="form-item">
+                <label>悄悄话（仅对方可见，可选）</label>
+                <textarea class="whisper" id="whisper" placeholder="写一句只有彼此知道的小秘密吧～"></textarea>
+                <p class="tip">悄悄话在记录区需点击才能查看哦</p>
+            </div>
+            <div class="btn-wrap">
+                <button class="confirm-btn" id="confirm-btn" disabled>确认操作</button>
+                <button class="export-btn" id="export-btn">导出记录</button>
+                <button class="anniversary-btn" id="anniversary-btn">设置纪念日</button>
+            </div>
+        </div>
+
+        <!-- 分数统计区 -->
+        <div class="stat">
+            <h3>恋爱分数统计</h3>
+            <div class="stat-card">
+                <div class="stat-item">
+                    <p>小白 总加分</p>
+                    <div class="stat-num" id="girl-add-total">0</div>
+                </div>
+                <div class="stat-item">
+                    <p>小白 总扣分</p>
+                    <div class="stat-num" id="girl-minus-total">0</div>
+                </div>
+                <div class="stat-item">
+                    <p>小白 净得分</p>
+                    <div class="stat-num" id="girl-net">0</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-item">
+                    <p>鸡毛 总加分</p>
+                    <div class="stat-num" id="boy-add-total">0</div>
+                </div>
+                <div class="stat-item">
+                    <p>鸡毛 总扣分</p>
+                    <div class="stat-num" id="boy-minus-total">0</div>
+                </div>
+                <div class="stat-item">
+                    <p>鸡毛 净得分</p>
+                    <div class="stat-num" id="boy-net">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分数趋势图区 -->
+        <div class="trend">
+            <h3>恋爱分数趋势</h3>
+            <div class="chart-wrap">
+                <canvas id="score-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- 历史记录区-多筛选+悄悄话 -->
+        <div class="record">
+            <h3>我们的恋爱印记</h3>
+            <div class="record-top-bar">
+                <div class="filter" id="person-filter">
+                    <button class="filter-btn active" data-filter="all">全部</button>
+                    <button class="filter-btn" data-filter="girl">小白</button>
+                    <button class="filter-btn" data-filter="boy">鸡毛</button>
+                </div>
+                <div class="tag-filter" id="tag-filter">
+                    <button class="filter-btn active" data-tag="all">所有标签</button>
+                    <button class="filter-btn" data-tag="暖心">暖心</button>
+                    <button class="filter-btn" data-tag="投喂">投喂</button>
+                    <button class="filter-btn" data-tag="撒娇">撒娇</button>
+                    <button class="filter-btn" data-tag="惹生气">惹生气</button>
+                </div>
+                <span class="record-count" id="record-count">共0条</span>
+                <button class="clear-btn" id="clear-btn">清空印记</button>
+            </div>
+            <div class="record-list" id="record-list">
+                <div class="empty">暂无恋爱印记，快来添加第一条甜蜜瞬间吧～</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示弹窗 -->
+    <div class="modal-mask" id="tip-modal">
+        <div class="modal">
+            <p id="tip-modal-text" style="text-align: center; font-size:16px; margin-bottom:20px;">操作成功！</p>
+            <button class="modal-btn modal-confirm" id="tip-modal-btn">确定</button>
+        </div>
+    </div>
+
+    <!-- 纪念日设置弹窗 -->
+    <div class="modal-mask" id="anni-modal">
+        <div class="modal">
+            <h4>设置专属纪念日</h4>
+            <div class="modal-form-item">
+                <label>纪念日名称</label>
+                <input type="text" class="modal-input" id="anni-name" placeholder="如：在一起纪念日、生日">
+            </div>
+            <div class="modal-form-item">
+                <label>纪念日日期（月/日）</label>
+                <input type="text" class="modal-input" id="anni-date" placeholder="如：05/20、12/31">
+            </div>
+            <div class="modal-btn-group">
+                <button class="modal-btn modal-cancel" id="anni-cancel">取消</button>
+                <button class="modal-btn modal-confirm" id="anni-save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 同步提示弹窗 -->
+    <div class="modal-mask" id="sync-modal">
+        <div class="modal">
+            <h4>跨设备同步教程</h4>
+            <p style="font-size:14px; line-height:1.6; color:#666; margin-bottom:15px;">
+                1. 将本文件保存至【百度云/腾讯微云/夸克云】等云盘<br>
+                2. 你和鸡毛均从云盘<b>用浏览器打开</b>该文件<br>
+                3. 操作前刷新页面，操作后自动同步，实现实时更新
+            </p>
+            <p class="sync-tip">💡 小贴士：本地存储+云盘同步，数据双重保障，不会丢失～</p>
+            <button class="modal-btn modal-confirm" id="sync-modal-btn">我知道啦</button>
+        </div>
+    </div>
+
+    <script>
+        // 初始化全局数据
+        let data = {
+            girl: { score: 100, add: 0, minus: 0, trend: [100] },
+            boy: { score: 100, add: 0, minus: 0, trend: [100] },
+            record: [],
+            anniversary: { name: '', date: '' },
+            avatar: {
+                girl: 'https://img.icons8.com/fluency/96/000000/girl.png',
+                boy: 'https://img.icons8.com/fluency/96/000000/boy.png'
+            },
+            filter: { person: 'all', tag: 'all' },
+            updateTime: new Date().toLocaleDateString()
+        };
+        let isClick = false; // 防抖标记
+        let chart = null; // 趋势图实例
+
+        // 获取所有DOM元素
+        const el = {
+            // 分数展示
+            girlScore: document.getElementById('girl-score'),
+            boyScore: document.getElementById('boy-score'),
+            girlAnniTag: document.getElementById('girl-anni-tag'),
+            boyAnniTag: document.getElementById('boy-anni-tag'),
+            girlAvatar: document.getElementById('girl-avatar'),
+            boyAvatar: document.getElementById('boy-avatar'),
+            // 操作区
+            selectPerson: document.getElementById('select-person'),
+            scoreBtnGroup: document.getElementById('score-btn-group'),
+            currentScore: document.getElementById('current-score'),
+            tagSelect: document.getElementById('tag-select'),
+            tagInput: document.getElementById('tag-input'),
+            reason: document.getElementById('reason'),
+            whisper: document.getElementById('whisper'),
+            confirmBtn: document.getElementById('confirm-btn'),
+            exportBtn: document.getElementById('export-btn'),
+            anniversaryBtn: document.getElementById('anniversary-btn'),
+            // 统计区
+            girlAddTotal: document.getElementById('girl-add-total'),
+            girlMinusTotal: document.getElementById('girl-minus-total'),
+            girlNet: document.getElementById('girl-net'),
+            boyAddTotal: document.getElementById('boy-add-total'),
+            boyMinusTotal: document.getElementById('boy-minus-total'),
+            boyNet: document.getElementById('boy-net'),
+            // 趋势图
+            scoreChart: document.getElementById('score-chart'),
+            // 记录区
+            personFilter: document.getElementById('person-filter'),
+            tagFilter: document.getElementById('tag-filter'),
+            recordCount: document.getElementById('record-count'),
+            clearBtn: document.getElementById('clear-btn'),
+            recordList: document.getElementById('record-list'),
+            // 弹窗
+            tipModal: document.getElementById('tip-modal'),
+            tipModalText: document.getElementById('tip-modal-text'),
+            tipModalBtn: document.getElementById('tip-modal-btn'),
+            anniModal: document.getElementById('anni-modal'),
+            anniName: document.getElementById('anni-name'),
+            anniDate: document.getElementById('anni-date'),
+            anniCancel: document.getElementById('anni-cancel'),
+            anniSave: document.getElementById('anni-save'),
+            syncModal: document.getElementById('sync-modal'),
+            syncModalBtn: document.getElementById('sync-modal-btn')
+        };
+
+        // 页面加载初始化
+        window.onload = function() {
+            // 读取本地存储数据，数据校验
+            const localData = localStorage.getItem('xbjm_loveScore');
+            if (localData) {
+                try {
+                    const parseData = JSON.parse(localData);
+                    if (parseData.girl && parseData.boy && Array.isArray(parseData.record)) {
+                        data = { ...data, ...parseData };
+                        // 头像同步
+                        el.girlAvatar.src = data.avatar.girl;
+                        el.boyAvatar.src = data.avatar.boy;
+                    }
+                } catch (e) {
+                    showTipModal('本地数据异常，使用初始数据～');
+                }
+            }
+            // 初始化所有模块
+            checkAnniversary(); // 纪念日检测
+            updateScore();      // 分数更新
+            updateStat();       // 统计更新
+            initChart();        // 趋势图初始化
+            renderRecord();     // 记录渲染
+            checkConfirmBtn();  // 确认按钮状态
+            // 首次打开显示同步教程
+            if (!localStorage.getItem('xbjm_loveScore_tip')) {
+                el.syncModal.style.display = 'flex';
+                localStorage.setItem('xbjm_loveScore_tip', '1');
+            }
+        };
+
+        // 数据保存到本地存储（专属key，避免冲突）
+        function saveData() {
+            localStorage.setItem('xbjm_loveScore', JSON.stringify(data));
+        }
+
+        // 提示弹窗
+        function showTipModal(text) {
+            el.tipModalText.innerText = text;
+            el.tipModal.style.display = 'flex';
+        }
+        // 弹窗关闭事件
+        el.tipModalBtn.onclick = () => el.tipModal.style.display = 'none';
+        el.anniCancel.onclick = () => el.anniModal.style.display = 'none';
+        el.syncModalBtn.onclick = () => el.syncModal.style.display = 'none';
+
+        // 1. 头像更换（点击头像替换，支持网络图片/Base64）
+        el.girlAvatar.onclick = function() {
+            const url = prompt('请输入小白的头像图片链接（网络图片/Base64）：', data.avatar.girl);
+            if (url) {
+                this.src = url;
+                data.avatar.girl = url;
+                saveData();
+            }
+        };
+        el.boyAvatar.onclick = function() {
+            const url = prompt('请输入鸡毛的头像图片链接（网络图片/Base64）：', data.avatar.boy);
+            if (url) {
+                this.src = url;
+                data.avatar.boy = url;
+                saveData();
+            }
+        };
+
+        // 2. 自定义加减分选择
+        el.scoreBtnGroup.addEventListener('click', function(e) {
+            if (e.target.classList.contains('score-btn')) {
+                this.querySelectorAll('.score-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                el.currentScore.value = e.target.dataset.score;
+                checkConfirmBtn();
+            }
+        });
+
+        // 3. 甜蜜标签选择（自定义标签显示/隐藏）
+        el.tagSelect.onchange = function() {
+            el.tagInput.style.display = this.value === '自定义' ? 'block' : 'none';
+        };
+
+        // 4. 检查确认按钮是否可点击
+        function checkConfirmBtn() {
+            const person = el.selectPerson.value;
+            const score = el.currentScore.value;
+            const reason = el.reason.value.trim();
+            if (person && score && reason) {
+                el.confirmBtn.classList.add('able');
+                el.confirmBtn.disabled = false;
+            } else {
+                el.confirmBtn.classList.remove('able');
+                el.confirmBtn.disabled = true;
+            }
+        }
+        // 监听输入变化，实时检查
+        el.selectPerson.onchange = checkConfirmBtn;
+        el.reason.oninput = checkConfirmBtn;
+        el.whisper.oninput = checkConfirmBtn;
+        el.tagInput.oninput = checkConfirmBtn;
+
+        // 5. 确认操作（防抖+核心逻辑）
+        el.confirmBtn.onclick = function() {
+            if (isClick) return;
+            isClick = true;
+            // 获取操作数据
+            const person = el.selectPerson.value;
+            const scoreVal = el.currentScore.value;
+            const scoreNum = Number(scoreVal);
+            const tag = el.tagSelect.value === '自定义' ? el.tagInput.value.trim() || '无' : el.tagSelect.value;
+            const reason = el.reason.value.trim();
+            const whisper = el.whisper.value.trim() || '无悄悄话';
+            const now = new Date();
+            const time = now.toLocaleString('zh-CN');
+            const date = now.toLocaleDateString();
+            const isAnni = checkAnniversary(); // 是否是纪念日
+
+            // 执行分数更新
+            data[person].score += scoreNum;
+            // 统计总加分/总扣分
+            if (scoreNum > 0) {
+                data[person].add += Math.abs(scoreNum);
+            } else {
+                data[person].minus += Math.abs(scoreNum);
+            }
+
+            // 趋势图数据更新（每日仅一条数据）
+            if (data.updateTime !== date) {
+                data.girl.trend.push(data.girl.score);
+                data.boy.trend.push(data.boy.score);
+                data.updateTime = date;
+                // 趋势图数据限制（最多30天）
+                if (data.girl.trend.length > 30) {
+                    data.girl.trend.shift();
+                    data.boy.trend.shift();
+                }
+            } else {
+                data.girl.trend[data.girl.trend.length - 1] = data.girl.score;
+                data.boy.trend[data.boy.trend.length - 1] = data.boy.score;
+            }
+
+            // 添加恋爱记录
+            const name = person === 'girl' ? '小白' : '鸡毛';
+            data.record.unshift({
+                name,
+                score: scoreVal,
+                scoreType: scoreVal.includes('+') ? (scoreVal === '+1' ? 'add1' : 'add2') : (scoreVal === '-1' ? 'minus1' : 'minus2'),
+                tag,
+                reason,
+                whisper,
+                time,
+                isAnni
+            });
+
+            // 页面更新+数据保存
+            setTimeout(() => {
+                updateScore();
+                updateStat();
+                initChart();
+                renderRecord();
+                saveData();
+                // 重置操作区
+                el.selectPerson.value = '';
+                el.scoreBtnGroup.querySelectorAll('.score-btn').forEach(btn => btn.classList.remove('active'));
+                el.currentScore.value = '';
+                el.tagSelect.value = '暖心';
+                el.tagInput.style.display = 'none';
+                el.tagInput.value = '';
+                el.reason.value = '';
+                el.whisper.value = '';
+                checkConfirmBtn();
+                showTipModal('操作成功！💕 恋爱印记已添加～');
+                isClick = false;
+            }, 500);
+        };
+
+        // 6. 纪念日设置与检测
+        el.anniversaryBtn.onclick = () => {
+            el.anniName.value = data.anniversary.name;
+            el.anniDate.value = data.anniversary.date;
+            el.anniModal.style.display = 'flex';
+        };
+        // 保存纪念日
+        el.anniSave.onclick = function() {
+            const name = el.anniName.value.trim();
+            const date = el.anniDate.value.trim();
+            if (!name || !date) {
+                showTipModal('请填写纪念日名称和日期～');
+                return;
+            }
+            data.anniversary = { name, date };
+            saveData();
+            el.anniModal.style.display = 'none';
+            checkAnniversary();
+            showTipModal(`🎉 ${name} 设置成功！${date}当天会有特殊标记～`);
+        };
+        // 检测是否是纪念日（月/日匹配）
+        function checkAnniversary() {
+            if (!data.anniversary.date) return false;
+            const now = new Date();
+            const nowMd = `${now.getMonth() + 1}/${now.getDate()}`;
+            const isAnni = nowMd === data.anniversary.date;
+            el.girlAnniTag.classList.toggle('show', isAnni);
+            el.boyAnniTag.classList.toggle('show', isAnni);
+            return isAnni;
+        }
+
+        // 7. 记录导出为TXT
+        el.exportBtn.onclick = function() {
+            if (data.record.length === 0) {
+                showTipModal('暂无恋爱记录可导出～');
+                return;
+            }
+            // 拼接导出内容
+            let content = `✨ 小白&鸡毛的恋爱加减分记录 ✨\n\n`;
+            content += `📅 导出时间：${new Date().toLocaleString('zh-CN')}\n`;
+            content += `❤️ 小白当前分数：${data.girl.score} 分\n`;
+            content += `❤️ 鸡毛当前分数：${data.boy.score} 分\n\n`;
+            content += `==================== 恋爱印记 ====================\n\n`;
+            data.record.forEach((item, index) => {
+                content += `${index + 1}. 【${item.name}】${item.score}分 | 标签：${item.tag}\n`;
+                content += `时间：${item.time} | 纪念日：${item.isAnni ? '是' : '否'}\n`;
+                content += `原因：${item.reason}\n`;
+                content += `悄悄话：${item.whisper}\n\n`;
+            });
+            // 创建下载链接
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `小白&鸡毛的恋爱记录_${new Date().toLocaleDateString()}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            showTipModal('恋爱记录导出成功！💕 已保存至本地～');
+        };
+
+        // 8. 分数趋势图初始化/更新
+        function initChart() {
+            // 销毁原有实例
+            if (chart) chart.destroy();
+            // 生成x轴标签（近N天）
+            const xLabels = data.girl.trend.map((_, i) => i === 0 ? '初始' : `第${i}天`);
+            // 创建图表
+            chart = new Chart(el.scoreChart, {
+                type: 'line',
+                data: {
+                    labels: xLabels,
+                    datasets: [
+                        {
+                            label: '小白的分数',
+                            data: data.girl.trend,
+                            borderColor: '#ff6b8b',
+                            backgroundColor: 'rgba(255,107,139,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#ff6b8b'
+                        },
+                        {
+                            label: '鸡毛的分数',
+                            data: data.boy.trend,
+                            borderColor: '#4285F4',
+                            backgroundColor: 'rgba(66,133,244,0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#4285F4'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: Math.min(...data.girl.trend, ...data.boy.trend) - 5,
+                            ticks: { stepSize: 5 }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { size: 14 } }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 9. 记录筛选（人物+标签）
+        // 人物筛选
+        el.personFilter.addEventListener('click', function(e) {
+            if (e.target.classList.contains('filter-btn')) {
+                this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                data.filter.person = e.target.dataset.filter;
+                renderRecord();
+            }
+        });
+        // 标签筛选
+        el.tagFilter.addEventListener('click', function(e) {
+            if (e.target.classList.contains('filter-btn')) {
+                this.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                data.filter.tag = e.target.dataset.tag;
+                renderRecord();
+            }
+        });
+
+        // 10. 渲染恋爱记录
+        function renderRecord() {
+            // 筛选数据
+            let filterRecord = [...data.record];
+            // 人物筛选
+            if (data.filter.person !== 'all') {
+                const name = data.filter.person === 'girl' ? '小白' : '鸡毛';
+                filterRecord = filterRecord.filter(item => item.name === name);
+            }
+            // 标签筛选
+            if (data.filter.tag !== 'all') {
+                filterRecord = filterRecord.filter(item => item.tag === data.filter.tag);
+            }
+            // 更新记录条数
+            el.recordCount.innerText = `共${filterRecord.length}条`;
+            // 清空列表
+            el.recordList.innerHTML = '';
+            // 无记录
+            if (filterRecord.length === 0) {
+                el.recordList.innerHTML = '<div class="empty">暂无相关恋爱印记～</div>';
+                return;
+            }
+            // 渲染每条记录
+            filterRecord.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'record-item';
+                div.innerHTML = `
+                    <div class="record-anni-tag ${item.isAnni ? 'show' : ''}"></div>
+                    <div class="record-top">
+                        <span class="record-name">${item.name}<span class="record-tag">${item.tag}</span></span>
+                        <span class="record-score ${item.scoreType}">${item.score}</span>
+                    </div>
+                    <div class="record-time">${item.time}</div>
+                    <div class="record-reason">${item.reason}</div>
+                    <div class="record-whisper">${item.whisper}</div>
+                `;
+                // 悄悄话解锁点击事件
+                div.querySelector('.record-whisper').onclick = function() {
+                    this.classList.toggle('unlock');
+                };
+                el.recordList.appendChild(div);
+            });
+        }
+
+        // 11. 清空恋爱记录（二次确认）
+        el.clearBtn.onclick = function() {
+            if (data.record.length === 0) {
+                showTipModal('暂无记录可清空～');
+                return;
+            }
+            if (confirm('确定要清空所有恋爱印记吗？操作不可恢复哦～')) {
+                data.record = [];
+                saveData();
+                renderRecord();
+                showTipModal('恋爱印记已清空～');
+            }
+        };
+
+        // 12. 更新实时分数（含颜色提醒）
+        function updateScore() {
+            // 小白分数
+            el.girlScore.innerText = data.girl.score;
+            el.girlScore.className = 'score';
+            if (data.girl.score < 90) el.girlScore.classList.add('low');
+            if (data.girl.score < 80) el.girlScore.classList.add('very-low');
+            // 鸡毛分数
+            el.boyScore.innerText = data.boy.score;
+            el.boyScore.className = 'score';
+            if (data.boy.score < 90) el.boyScore.classList.add('low');
+            if (data.boy.score < 80) el.boyScore.classList.add('very-low');
+        }
+
+        // 13. 更新统计数据
+        function updateStat() {
+            el.girlAddTotal.innerText = data.girl.add;
+            el.girlMinusTotal.innerText = data.girl.minus;
+            el.girlNet.innerText = data.girl.add - data.girl.minus;
+            el.boyAddTotal.innerText = data.boy.add;
+            el.boyMinusTotal.innerText = data.boy.minus;
+            el.boyNet.innerText = data.boy.add - data.boy.minus;
+        }
+    </script>
+</body>
+</html>
